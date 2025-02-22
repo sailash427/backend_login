@@ -40,10 +40,9 @@ const transporter = nodemailer.createTransport({
     connectionTimeout: 60000 // Increase connection timeout to 60 seconds
 });
 
-
 // Function to send the password reset email
 const sendPasswordResetEmail = (email, token) => {
-    const resetUrl = `http://localhost:3000/reset-password?token=${token}`; // Frontend URL
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`; // Frontend URL
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
@@ -83,18 +82,18 @@ const userSchema = new mongoose.Schema({
 });
 
 // Password Hashing Middleware
-// userSchema.pre('save', async function (next) {
-//    if (!this.isModified('Password')) {
-//        return next();
-//    }
-//    try {
-//        const salt = await bcrypt.genSalt(10);
-//        this.Password = await bcrypt.hash(this.Password, salt);
-//        next();
-//    } catch (err) {
-//        next(err);
-//    }
-// });
+userSchema.pre('save', async function (next) {
+   if (!this.isModified('Password')) {
+       return next();
+   }
+   try {
+       const salt = await bcrypt.genSalt(10);
+       this.Password = await bcrypt.hash(this.Password, salt);
+       next();
+   } catch (err) {
+       next(err);
+   }
+});
 
 const User = mongoose.model('User', userSchema);
 
@@ -272,7 +271,6 @@ app.post('/api/users/reset-password', async (req, res) => {
         res.status(500).send({ error: 'Failed to reset password', details: error.message });
     }
 });
-
 
 // Centralized error handling middleware
 app.use((err, req, res, next) => {
